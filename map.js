@@ -69,10 +69,46 @@ map.on("load", async () => {
     // Await JSON fetch
     const jsonData = await d3.json(jsonurl);
 
-    console.log("Loaded JSON Data:", jsonData); // Log to verify structure
+    console.log("Loaded JSON Data (stations):", jsonData); // Log to verify structure
 
     let stations = jsonData.data.stations;
     console.log("Stations Array:", stations);
+
+    const csvurl =
+      "https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv" ||
+      "assets/bluebikes-traffic-2024-03.csv";
+    const trips = await d3.csv(csvurl);
+    console.log("Loaded CSV Data (trips):", trips);
+
+    // Count departures per station
+    const departures = d3.rollup(
+      trips,
+      (v) => v.length,
+      (d) => d.start_station_id
+    );
+
+    // Count arrivals per station
+    const arrivals = d3.rollup(
+      trips,
+      (v) => v.length,
+      (d) => d.end_station_id
+    );
+
+    // Add traffic properties to each station
+    stations = stations.map((station) => {
+      let id = station.short_name;
+      station.arrivals = arrivals.get(id) ?? 0;
+      station.departures = departures.get(id) ?? 0;
+      station.totalTraffic = station.arrivals + station.departures;
+      return station;
+    });
+
+    console.log("Stations with traffic:", stations);
+
+    const radiusScale = d3
+      .scaleSqrt()
+      .domain([0, d3.max(stations, (d) => d.totalTraffic)])
+      .range([0, 25]);
 
     // Append circles to the SVG for each station
     const circles = svg
@@ -80,11 +116,18 @@ map.on("load", async () => {
       .data(stations)
       .enter()
       .append("circle")
-      .attr("r", 5) // Radius of the circle
-      .attr("fill", "steelblue") // Circle fill color
-      .attr("stroke", "white") // Circle border color
-      .attr("stroke-width", 1) // Circle border thickness
-      .attr("opacity", 0.8); // Circle opacity
+      .attr("r", (d) => radiusScale(d.totalTraffic))
+      .attr("fill", "steelblue")
+      .attr("stroke", "white")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.8)
+      .each(function (d) {
+        d3.select(this)
+          .append("title")
+          .text(
+            `${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`
+          );
+      });
 
     // Function to update circle positions when the map moves/zooms
     function updatePositions() {
