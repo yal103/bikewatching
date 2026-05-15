@@ -30,3 +30,72 @@ body {
   stroke-width: 1;
   pointer-events: auto;
 }
+
+header {
+  display: flex;
+  width: 100%;
+  gap: 1em;
+  align-items: baseline;
+  padding-bottom: 1em;
+}
+
+header h1 {
+  margin: 0;
+}
+
+header label {
+  margin-left: auto;
+  text-align: right;
+}
+
+#any-time {
+  font-style: italic;
+  color: #555;
+}
+
+#map svg circle,
+.legend > div {
+  --color-departures: steelblue;
+  --color-arrivals: darkorange;
+  --color: color-mix(
+    in oklch,
+    var(--color-departures) calc(100% * var(--departure-ratio)),
+    var(--color-arrivals)
+  );
+}
+
+#map svg circle {
+  fill: var(--color);
+  fill-opacity: 0.6;
+  stroke: white;
+  stroke-width: 1;
+  pointer-events: auto;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-block: 0.5em;
+  font-size: 0.85em;
+}
+
+.legend span {
+  text-transform: uppercase;
+  color: gray;
+}
+
+.legend > div {
+  display: flex;
+  align-items: center;
+  gap: 0.3em; /* small gap — swatch feels attached to its label */
+}
+
+.legend > div::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  background: var(--color);
+}
